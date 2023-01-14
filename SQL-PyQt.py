@@ -382,18 +382,22 @@ class CategoriesWindow(QWidget):
         layout.addWidget(add_category_button)
 
 class  Window(QWidget):
-    def __init__(self, parent_window = None):
+    def __init__(self, parent_window = None, close_same_windows = True, default_window_title = 'Application window'):
         super().__init__
         self.window_title = None
         self.this_window = None
         self.parent_window = parent_window
-        self.children_windows = {}
+        self.close_same_windows = close_same_windows
+        self.default_window_title = default_window_title
+        self.children_windows = []
         self.show_these_window()
 
     def init_UI(self):
         pass
 
-    def show_this_window(self, size_x, size_y, window_title = 'Application window'):
+    def show_this_window(self, size_x, size_y, window_title = None):
+        if window_title is None:
+            window_title = self.default_window_title
         self.window_title = window_title
         self.setGeometry(size_x, size_y)
         self.setWindowTitle(self.window_title)
@@ -401,16 +405,22 @@ class  Window(QWidget):
 
     def close_this_window(self):
         self.close()
-        self.parent_window.open_window_as_child()
+        self.parent_window.children_windows[type(self)].remove(self)
 
     def open_window_as_child(self, child_window_class, window_name, size_x, size_y):
         created_child_window = child_window_class(window_name, size_x, size_y)
-        if(not self.children_windows.has_key(child_window_class)):
-            self.children_windows[child_window_class] = created_child_window
+        if(self.close_same_windows):
+            if(not (self.children_windows.has_key(child_window_class) and len(self.children_windows[child_window_class]) >= 1)):
+                self.children_windows[child_window_class] = [created_child_window]
+            else:
+                self.children_windows[child_window_class].close_this_window()
+                self.children_windows[child_window_class] = [created_child_window]
         else:
-            self.children_windows[child_window_class].close_this_window()
-
-        created_child_window.show_this_window()
+            if(self.children_windows.has_key(child_window_class)):
+                self.children_windows[child_window_class].append(created_child_window)
+            else:
+                self.children_windows[child_window_class] = [created_child_window]
+        created_child_window.show_this_window(window_name, size_x, size_y)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
