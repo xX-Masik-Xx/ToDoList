@@ -2,7 +2,7 @@ import sys
 
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QListWidgetItem, QApplication, QPushButton, QListWidget, QVBoxLayout, QLineEdit, QMenu, QMainWindow, QToolBar, QAction, QComboBox, QTextEdit, QHBoxLayout, QLabel, QLayout, QCheckBox, QSpacerItem, QListView
+from PyQt5.QtWidgets import QWidget, QListWidgetItem, QApplication, QPushButton, QListWidget, QVBoxLayout, QLineEdit, QMenu, QMainWindow, QAction, QComboBox, QTextEdit, QHBoxLayout, QLabel, QLayout, QCheckBox, QSpacerItem, QListView
 from PyQt5.QtCore import Qt, QPoint
 import math
 
@@ -99,24 +99,20 @@ class ApplicationMainWindows(QMainWindow):
     def show_add_task_window(self):
         if self.add_task_window is None:
             self.add_task_window = AddTaskWindow(self)
-            self.add_task_window.show()
 
         else:
             self.add_task_window.close()  # Close window.
             self.add_task_window = None # Discard reference.
             self.add_task_window = AddTaskWindow(self)
-            self.add_task_window.show()
 
     def show_categories_window(self):
         if self.categories_window is None:
             self.categories_window = CategoriesWindow(self)
-            self.categories_window.show()
 
         else:
             self.categories_window.close()  # Close window.
             self.categories_window = None # Discard reference.
             self.categories_window = CategoriesWindow(self)
-            self.categories_window.show()
 
     def create_db(self):
         con = QSqlDatabase.addDatabase("QSQLITE")
@@ -283,8 +279,8 @@ class ApplicationMainWindows(QMainWindow):
         query.exec()
         self.load_categories()
         query.finish()
-        self.add_task_window.w.close()
-        self.add_task_window.w = None
+        self.categories_window.close()
+        self.categories_window = None
 
     def add_task(self):
         name = self.task_name.text()
@@ -384,6 +380,37 @@ class CategoriesWindow(QWidget):
         add_category_button.resize(add_category_button.sizeHint())
         add_category_button.clicked.connect(self.parent_window.add_category)
         layout.addWidget(add_category_button)
+
+class  Window(QWidget):
+    def __init__(self, parent_window = None):
+        super().__init__
+        self.window_title = None
+        self.this_window = None
+        self.parent_window = parent_window
+        self.children_windows = {}
+        self.show_these_window()
+
+    def init_UI(self):
+        pass
+
+    def show_this_window(self, size_x, size_y, window_title = 'Application window'):
+        self.window_title = window_title
+        self.setGeometry(size_x, size_y)
+        self.setWindowTitle(self.window_title)
+        self.show()
+
+    def close_this_window(self):
+        self.close()
+        self.parent_window.open_window_as_child()
+
+    def open_window_as_child(self, child_window_class, window_name, size_x, size_y):
+        created_child_window = child_window_class(window_name, size_x, size_y)
+        if(not self.children_windows.has_key(child_window_class)):
+            self.children_windows[child_window_class] = created_child_window
+        else:
+            self.children_windows[child_window_class].close_this_window()
+
+        created_child_window.show_this_window()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
